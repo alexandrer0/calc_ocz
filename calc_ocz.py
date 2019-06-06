@@ -21,8 +21,6 @@ query_reg = '''select dpg_code, target_date, hour, pmin_br, pmax_br
             order by dpg_code, target_date, hour'''
 reg = pd.read_sql(query_reg, conn, params={'d': cfg.date})
 
-# print(ocz.dtypes)
-# print(reg.dtypes)
 corr_ocz = ocz.merge(reg, on=['dpg_code', 'target_date', 'hour'])
 
 # Считаем ОЦЗ
@@ -45,4 +43,3 @@ corr_ocz.to_sql('calcopc_dpg_date_hour', conn, 'mfo_br_test', if_exists='replace
 print(round(time() - time_start, 2), 'sec')
 
 conn.close()
-
