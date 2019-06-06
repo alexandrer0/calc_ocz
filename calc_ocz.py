@@ -15,22 +15,25 @@ query_ocz = '''select dpg_code, target_date, hour, dir, volume
             order by dpg_code, target_date, hour'''
 ocz = pd.read_sql(query_ocz, conn, params={'d': cfg.date})
 
-query_reg = '''select dpg_code, target_date, hour, pmin_br, pmax_br
-            from mfo_br_test.reg_dpg_date_hour 
+query_reg = '''select dpg_code, target_date, hour, pmin_bm, pmax_bm
+            from mfo_br_test.reg_dpg_date_hour_ocp
             where target_date = %(d)s
             order by dpg_code, target_date, hour'''
 reg = pd.read_sql(query_reg, conn, params={'d': cfg.date})
+reg['target_date'] = pd.to_datetime(reg['target_date'])
 
+# print(reg)
+# print(reg.dtypes)
 corr_ocz = ocz.merge(reg, on=['dpg_code', 'target_date', 'hour'])
 
 # Считаем ОЦЗ
 corr_ocz_plus = corr_ocz.drop(corr_ocz[corr_ocz['dir'] != 2].index, axis=0)
 corr_ocz_minus = corr_ocz.drop(corr_ocz[corr_ocz['dir'] != 1].index, axis=0)
-corr_ocz_plus.drop(corr_ocz_plus[corr_ocz_plus['volume'] <= corr_ocz_plus['pmin_br']].index, axis=0, inplace=True)
-corr_ocz_minus.drop(corr_ocz_minus[corr_ocz_minus['volume'] >= corr_ocz_minus['pmax_br']].index, axis=0, inplace=True)
-corr_ocz_plus['volume'] = pd.DataFrame([corr_ocz_plus['volume'], corr_ocz_plus['pmax_br']]).min()
-corr_ocz_minus['volume'] = pd.DataFrame([corr_ocz_minus['volume'], corr_ocz_minus['pmin_br']]).max()
-colum = ['pmin_br', 'pmax_br']
+corr_ocz_plus.drop(corr_ocz_plus[corr_ocz_plus['volume'] <= corr_ocz_plus['pmin_bm']].index, axis=0, inplace=True)
+corr_ocz_minus.drop(corr_ocz_minus[corr_ocz_minus['volume'] >= corr_ocz_minus['pmax_bm']].index, axis=0, inplace=True)
+corr_ocz_plus['volume'] = pd.DataFrame([corr_ocz_plus['volume'], corr_ocz_plus['pmax_bm']]).min()
+corr_ocz_minus['volume'] = pd.DataFrame([corr_ocz_minus['volume'], corr_ocz_minus['pmin_bm']]).max()
+colum = ['pmin_bm', 'pmax_bm']
 corr_ocz_plus.drop(colum, axis=1, inplace=True)
 corr_ocz_minus.drop(colum, axis=1, inplace=True)
 corr_ocz = corr_ocz_plus.append(corr_ocz_minus)
